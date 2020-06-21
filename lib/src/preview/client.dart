@@ -9,19 +9,15 @@ class PreviewClient {
   // ignore: public_member_api_docs
   PreviewClient(
     this._baseUrl,
-    String username,
-    String password,
-  ) {
-    final client = NextCloudHttpClient(username, password);
-    _network = Network(client);
-  }
+    this._network,
+  );
 
   final String _baseUrl;
-  Network _network;
 
-  String _getPreviewUrl(String remotePath, int width, int height) {
-    return '$_baseUrl/index.php/core/preview.png?file=${Uri.encodeQueryComponent(remotePath)}&x=$width&y=$height&a=1&mode=cover&forceIcon=0';
-  }
+  final Network _network;
+
+  String _getPreviewUrl(String remotePath, int width, int height) =>
+      '$_baseUrl/index.php/core/preview.png?file=${Uri.encodeQueryComponent(remotePath)}&x=$width&y=$height&a=1&mode=cover&forceIcon=0';
 
   String _getThumbnailUrl(String remotePath, int width, int height) {
     if (!remotePath.startsWith('/')) {

@@ -1,119 +1,12 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:nextcloud/nextcloud.dart';
 import 'package:test/test.dart';
 
-class Config {
-  const Config({
-    this.host,
-    this.username,
-    this.password,
-    this.shareUser,
-    this.testDir,
-    this.image,
-  });
+import 'config.dart';
 
-  factory Config.fromJson(Map<String, dynamic> json) => Config(
-        host: json['host'],
-        username: json['username'],
-        password: json['password'],
-        shareUser: json['shareUser'],
-        testDir: json['testDir'],
-        image: json['image']
-      );
-
-  final String host;
-  final String username;
-  final String password;
-  final String shareUser;
-  final String testDir;
-  final String image;
-}
-
-// TODO: add more tests
+@Timeout(Duration(seconds: 60))
 void main() {
-  final config =
-      Config.fromJson(json.decode(File('config.json').readAsStringSync()));
-  final client = NextCloudClient(config.host, config.username, config.password);
-  group('Nextcloud connection', () {
-    test('Different host urls', () {
-      final urls = [
-        ['http://cloud.test.com/index.php/123', 'http://cloud.test.com'],
-        ['https://cloud.test.com:80/index.php/123', 'https://cloud.test.com'],
-        ['cloud.test.com', 'https://cloud.test.com'],
-        ['cloud.test.com:90', 'https://cloud.test.com'],
-        ['test.com/cloud', 'https://test.com/cloud'],
-        ['test.com/cloud/index.php/any/path', 'https://test.com/cloud'],
-      ];
-
-      for (final url in urls) {
-        final client = NextCloudClient(
-          url[0],
-          config.username,
-          config.password,
-        );
-        expect(client.baseUrl, equals(url[1]));
-      }
-    });
-  });
-  group('WebDav', () {
-    test('Clean test environment', () async {
-      expect(
-          await (() async {
-            try {
-              await client.webDav.delete(config.testDir);
-              // ignore: empty_catches
-            } on RequestException {}
-          })(),
-          equals(null));
-    });
-    test('Create directory', () async {
-      expect(
-          (await client.webDav.mkdir(config.testDir)).statusCode, equals(201));
-    });
-    test('List directory', () async {
-      expect((await client.webDav.ls(config.testDir)).length, equals(0));
-    });
-    test('Upload files', () async {
-      expect(
-          (await client.webDav.upload(
-                  File('test/files/test.png').readAsBytesSync(),
-                  '${config.testDir}/test.png'))
-              .statusCode,
-          equals(201));
-      expect(
-          (await client.webDav.upload(
-                  File('test/files/test.txt').readAsBytesSync(),
-                  '${config.testDir}/test.txt'))
-              .statusCode,
-          equals(201));
-      expect((await client.webDav.ls(config.testDir)).length, equals(2));
-    });
-    test('Copy file', () async {
-      expect(
-          await client.webDav.copy(
-            '${config.testDir}/test.txt',
-            '${config.testDir}/test2.txt',
-          ),
-          null);
-      expect((await client.webDav.ls(config.testDir)).length, equals(3));
-    });
-    test('Move file', () async {
-      expect(
-          await client.webDav.move(
-            '${config.testDir}/test2.txt',
-            '${config.testDir}/test3.txt',
-          ),
-          null);
-      expect((await client.webDav.ls(config.testDir)).length, equals(3));
-      expect(
-          (await client.webDav.ls(config.testDir))
-              .where((f) => f.name == 'test3.txt')
-              .length,
-          equals(1));
-    });
-  });
+  final config = getConfig();
+  final client = getClient(config);
   group('Talk', () {
     test('Signaling', () async {
       expect(
@@ -245,7 +138,7 @@ void main() {
       expect(
         await client.talk.messageManagement.sendMessage(
           token,
-          'Test answere',
+          'Test answer',
           replyTo: message.id,
         ),
         isNotNull,
@@ -270,20 +163,6 @@ void main() {
     test('Delete conversation', () async {
       expect(await client.talk.conversationManagement.deleteConversation(token),
           isNull);
-    });
-  });
-  group('Preview', () {
-    test('Get preview', () async {
-      expect(await client.preview.getPreview('/${config.image}', 64, 64), isNotNull);
-    });
-    test('Get preview stream', () async {
-      expect(await client.preview.getPreviewStream('/${config.image}', 64, 64), isNotNull);
-    });
-    test('Get thumbnail', () async {
-      expect(await client.preview.getThumbnail('/${config.image}', 64, 64), isNotNull);
-    });
-    test('Get thumbnail stream', () async {
-      expect(await client.preview.getThumbnailStream('/${config.image}', 64, 64), isNotNull);
     });
   });
 }

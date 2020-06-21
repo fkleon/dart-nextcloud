@@ -11,16 +11,12 @@ class WebDavClient {
   // ignore: public_member_api_docs
   WebDavClient(
     this._baseUrl,
-    String username,
-    String password,
-  ) {
-    final client = NextCloudHttpClient(username, password);
-    _network = Network(client);
-  }
+    this._network,
+  );
 
   final String _baseUrl;
 
-  Network _network;
+  final Network _network;
 
   /// get url from given [path]
   String _getUrl(String path) {
@@ -95,6 +91,8 @@ class WebDavClient {
 
   /// list the directories and files under given [remotePath]
   Future<List<WebDavFile>> ls(String remotePath) async {
+    // This method actually uses XML instead of JSON, because WebDav only
+    // accepts XML regardless of the headers that are set
     final data = utf8.encode('''
       <d:propfind xmlns:d="DAV:" xmlns:oc="http://owncloud.org/ns">
         <d:prop>
