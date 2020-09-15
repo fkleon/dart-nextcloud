@@ -181,6 +181,15 @@ void main() {
       expect(file.shareTypes, isEmpty);
       expect(file.size, greaterThan(0));
     });
+    test('Get additional properties', () async {
+      final path = '${config.testDir}/prop-test.txt';
+      final file = await client.webDav.getProps(path);
+
+      expect(file.getOtherProp('oc:comments-count', 'http://owncloud.org/ns'),
+          '0');
+      expect(file.getOtherProp('nc:has-preview', 'http://nextcloud.org/ns'),
+          'true');
+    });
     test('Filter files', () async {
       final path = '${config.testDir}/filter-test.txt';
       final data = utf8.encode('WebDAV filtertest');
@@ -215,6 +224,33 @@ void main() {
       expect(file.createdDate.isAtSameMomentAs(createdDate), isTrue,
           reason: 'Expected same time: $createdDate = ${file.createdDate}');
       expect(file.uploadedDate, isNotNull);
+    });
+    test('Set custom properties', () async {
+      final path = '${config.testDir}/prop-test.txt';
+
+      final customNamespaces = {'http://leonhardt.co.nz/ns': 'le'};
+      final updated = await client.webDav.updateProps(
+          path,
+          {
+            'le:custom': 'custom-prop-value',
+            'le:custom2': 'custom-prop-value2'
+          },
+          customNamespaces: customNamespaces);
+      expect(updated, isTrue);
+
+      final file = await client.webDav.getProps(path,
+          props: {
+            'd:getlastmodified',
+            'oc:fileid',
+            'le:custom',
+            'le:custom2',
+          },
+          customNamespaces: customNamespaces);
+      expect(file.name, 'prop-test.txt');
+      expect(file.getOtherProp('custom', customNamespaces.keys.first),
+          'custom-prop-value');
+      expect(file.getOtherProp('custom2', customNamespaces.keys.first),
+          'custom-prop-value2');
     });
   });
   group('Talk', () {

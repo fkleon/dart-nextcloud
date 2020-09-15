@@ -155,7 +155,9 @@ class WebDavClient {
         'd:getcontenttype',
         'oc:id',
         'oc:share-types',
-      }}) async {
+      },
+      Map<String, String> customNamespaces}) async {
+    final namespaces = {...WebDavClient.namespaces, ...?customNamespaces};
     final builder = XmlBuilder();
     builder
       ..processing('xml', 'version="1.0"')
@@ -211,7 +213,9 @@ class WebDavClient {
   /// Populates all available properties by default, but a reduced set can be
   /// specified via [props].
   Future<WebDavFile> getProps(String remotePath,
-      {Set<String> props = WebDavClient.allProps}) async {
+      {Set<String> props = WebDavClient.allProps,
+      Map<String, String> customNamespaces}) async {
+    final namespaces = {...WebDavClient.namespaces, ...?customNamespaces};
     final builder = XmlBuilder();
     builder
       ..processing('xml', 'version="1.0"')
@@ -231,7 +235,9 @@ class WebDavClient {
   /// Update (string) properties of the given [remotePath].
   ///
   /// Returns true if the update was successful.
-  Future<bool> updateProps(String remotePath, Map<String, String> props) async {
+  Future<bool> updateProps(String remotePath, Map<String, String> props,
+      {Map<String, String> customNamespaces}) async {
+    final namespaces = {...WebDavClient.namespaces, ...?customNamespaces};
     final builder = XmlBuilder();
     builder
       ..processing('xml', 'version="1.0"')
